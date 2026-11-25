@@ -28,8 +28,4 @@ class GerenciadorAtendimentos:
             return self.fila_normal.desenfileirar()
 
         else:
-<<<<<<< HEAD
             return None
-=======
-            return None
->>>>>>> ffc59a9 (Delete GerenciadorAtendimentos class)
