@@ -1,5 +1,3 @@
-from datetime import date
-
 class Perda:
     def __init__(self, produto, lote, quantidade, data_descarte):
         self.produto = produto
@@ -9,11 +7,10 @@ class Perda:
 
     @staticmethod
     def descartar_lotes_vencidos(produto, data_atual):
-        atual = produto.lotes.inicio
+        quantidade_lotes = produto.lotes.tamanho()
 
-        while atual is not None:
-            lote = atual.dado
-            proximo = atual.proximo
+        for i in range(quantidade_lotes):
+            lote = produto.lotes.desenfileirar()
 
             if lote.data_validade < data_atual:
                 perda = Perda(
@@ -24,6 +21,6 @@ class Perda:
                 )
 
                 produto.perdas.adicionar(perda)
-                produto.lotes.remover(lote)
 
-            atual = proximo
+            else:
+                produto.lotes.enfileirar(lote)

@@ -1,3 +1,4 @@
+from datetime import date
 from estruturas.lista import ListaEncadeada
 from modelos.perda import Perda
 
@@ -24,14 +25,15 @@ class GerenciadorEstoque:
             return False
 
         lote.produto = produto
-        produto.adicionar_lote(lote)
-        return True
+        return produto.adicionar_lote(lote)
 
     def retirar_estoque(self, codigo, quantidade):
         produto = self.buscar_produto(codigo)
 
         if produto is None:
             return False
+
+        Perda.descartar_lotes_vencidos(produto, date.today())
 
         return produto.retirar_estoque(quantidade)
 
@@ -41,11 +43,16 @@ class GerenciadorEstoque:
         if produto is None or nova_quantidade < 0:
             return False
 
-        if not produto.lotes.contem(lote):
-            return False
+        atual = produto.lotes.inicio
 
-        lote.quantidade = nova_quantidade
-        return True
+        while atual is not None:
+            if atual.dado is lote:
+                lote.quantidade = nova_quantidade
+                return True
+
+            atual = atual.proximo
+
+        return False
 
     def descartar_vencidos(self, codigo, data_atual):
         produto = self.buscar_produto(codigo)
