@@ -1,5 +1,5 @@
 class Lote:
-    def __init__(self, produto, fornecedor, preco_compra,data_compra, data_validade, quantidade):
+    def __init__(self, produto, fornecedor, preco_compra, data_compra, data_validade, quantidade):
         self.produto = produto
         self.fornecedor = fornecedor
         self.preco_compra = preco_compra
