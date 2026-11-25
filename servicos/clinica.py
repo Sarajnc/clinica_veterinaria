@@ -52,14 +52,6 @@ class Clinica:
 
         return atendimento
 
-    def liberar_consultorio(self, atendimento):
-        if not self.atendimentos_em_andamento.remover(atendimento):
-            return False
-
-        self.consultorios_ocupados -= 1
-        return True
-    
-
     def finalizar_atendimento(self, atendimento, forma_pagamento, parcelas=1):
         if not self.atendimentos_em_andamento.contem(atendimento):
             return False
@@ -146,7 +138,7 @@ class Clinica:
         self.consultorios_ocupados -= 1
 
         return True
-
+    
     def adicionar_medicamento(self, atendimento, codigo, quantidade):
         if not self.atendimentos_em_andamento.contem(atendimento):
             return False
@@ -156,19 +148,15 @@ class Clinica:
         if produto is None or quantidade <= 0:
             return False
 
+        self.estoque.descartar_vencidos(codigo, date.today())
+
         if produto.quantidade_em_estoque() < quantidade:
             return False
 
-        item = ItemProntuario(
-            produto.nome,
-            quantidade,
-            produto.preco_venda,
-            produto
-        )
+        item = ItemProntuario(produto.nome,quantidade,produto.preco_venda,produto)
 
         return atendimento.prontuario.adicionar_item(
-            item, "medicamento"
-        )
+            item, "medicamento")
 
     def adicionar_procedimento(self, atendimento, nome, valor):
         if not self.atendimentos_em_andamento.contem(atendimento):

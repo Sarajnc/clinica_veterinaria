@@ -1,4 +1,4 @@
-from lista import No
+from estruturas.lista import No
 
 class Pilha:
     def __init__(self):
