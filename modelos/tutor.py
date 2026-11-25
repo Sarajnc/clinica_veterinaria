@@ -1,4 +1,4 @@
-from lista import ListaEncadeada
+from estruturas.lista import ListaEncadeada
 
 class Tutor:
     def __init__(self, nome, cpf, telefone):
