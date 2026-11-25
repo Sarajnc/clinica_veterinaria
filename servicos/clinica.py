@@ -4,6 +4,8 @@ from servicos.atendimento import GerenciadorAtendimentos
 from servicos.estoque import GerenciadorEstoque
 from modelos.prontuario import Prontuario
 from modelos.item_prontuario import ItemProntuario
+from datetime import date
+from modelos.pagamento import Pagamento
 
 class Clinica:
     def __init__(self, quantidade_consultorios):
@@ -13,6 +15,8 @@ class Clinica:
 
         self.quantidade_consultorios = quantidade_consultorios
         self.consultorios_ocupados = 0
+
+        self.pagamentos = ListaEncadeada()
 
         self.atendimentos_em_andamento = ListaEncadeada()
         self.prontuarios = ListaEncadeada()
@@ -55,14 +59,68 @@ class Clinica:
         self.consultorios_ocupados -= 1
         return True
     
-    def finalizar_atendimento(self, atendimento):
+
+    def finalizar_atendimento(self, atendimento, forma_pagamento, parcelas=1):
         if not self.atendimentos_em_andamento.contem(atendimento):
             return False
 
         prontuario = atendimento.prontuario
 
-        if prontuario is None:
+        if prontuario is None or prontuario.status != "Aberto":
             return False
+
+        if forma_pagamento not in ("PIX", "Cartão", "Dinheiro"):
+            return False
+
+        if parcelas < 1:
+            return False
+
+        if forma_pagamento != "Cartão" and parcelas != 1:
+            return False
+
+
+        valor_medicamentos = self.calcular_valor_itens(
+            prontuario.medicamentos
+        )
+
+        valor_procedimentos = self.calcular_valor_itens(
+            prontuario.procedimentos
+        )
+
+        atual = prontuario.medicamentos.inicio
+
+        while atual is not None:
+            item = atual.dado
+
+            self.estoque.descartar_vencidos(
+                item.produto.codigo, date.today()
+            )
+
+            total_necessario = 0
+            outro = prontuario.medicamentos.inicio
+
+            while outro is not None:
+                if outro.dado.produto is item.produto:
+                    total_necessario += outro.dado.quantidade
+
+                outro = outro.proximo
+
+            if item.produto.quantidade_em_estoque() < total_necessario:
+                return False
+
+            atual = atual.proximo
+
+        atual = prontuario.medicamentos.inicio
+
+        while atual is not None:
+            item = atual.dado
+
+            if not self.estoque.retirar_estoque(
+                item.produto.codigo, item.quantidade
+            ):
+                return False
+
+            atual = atual.proximo
 
         if not prontuario.registrar_alta():
             return False
@@ -70,11 +128,25 @@ class Clinica:
         if not prontuario.fechar_prontuario():
             return False
 
+        pagamento = Pagamento(
+            atendimento.nome_tutor,
+            prontuario,
+            forma_pagamento,
+            valor_medicamentos,
+            valor_procedimentos,
+            parcelas
+        )
+
+        if not pagamento.confirmar_pagamento():
+            return False
+
+        self.pagamentos.adicionar(pagamento)
+
         self.atendimentos_em_andamento.remover(atendimento)
         self.consultorios_ocupados -= 1
 
         return True
-  
+
     def adicionar_medicamento(self, atendimento, codigo, quantidade):
         if not self.atendimentos_em_andamento.contem(atendimento):
             return False
@@ -110,3 +182,13 @@ class Clinica:
         return atendimento.prontuario.adicionar_item(
             item, "procedimento"
         )
+
+    def calcular_valor_itens(self, itens):
+        total = 0
+        atual = itens.inicio
+
+        while atual is not None:
+            total += atual.dado.calcular_valor()
+            atual = atual.proximo
+
+        return total
