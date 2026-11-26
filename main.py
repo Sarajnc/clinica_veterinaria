@@ -12,15 +12,13 @@ clinica = Clinica(2)
 historico = ListaEncadeada()
 proximo_id = 1
 
-
 def buscar_atendimento(numero):
     atual = historico.inicio
     while atual:
-        if atual.dado.id == numero:
+        if atual.dado.id_atendimento == numero:
             return atual.dado
         atual = atual.proximo
     return None
-
 
 def listar_itens(lista):
     atual = lista.inicio
@@ -31,7 +29,6 @@ def listar_itens(lista):
         print(f"{numero}. {item.nome} | Quantidade: {item.quantidade} | R$ {item.calcular_valor():.2f}")
         atual = atual.proximo
         numero += 1
-
 
 def selecionar_item(lista):
     numero = int(input("Número do item: "))
@@ -45,7 +42,6 @@ def selecionar_item(lista):
         posicao += 1
 
     return None
-
 
 def cadastro():
     print("\n1 - Cadastrar tutor")
@@ -98,7 +94,6 @@ def cadastro():
         removido = clinica.cadastro.remover(cpf, nome) if nome else clinica.cadastro.remover(cpf)
         print("Cadastro removido!" if removido else "Cadastro não encontrado.")
 
-
 def atendimento():
     global proximo_id
 
@@ -140,9 +135,8 @@ def atendimento():
         while atual:
             a = atual.dado
             status = a.prontuario.status if a.prontuario else "Aguardando"
-            print(f"#{a.id} - {a.animal.nome} | {status}")
+            print(f"#{a.id_atendimento} - {a.animal.nome} | {status}")
             atual = atual.proximo
-
 
 def prontuario():
     numero = int(input("Número do atendimento: "))
@@ -161,6 +155,7 @@ def prontuario():
     print("5 - Remover medicamento")
     print("6 - Remover procedimento")
     print("7 - Consultar prontuário")
+    print("8 - Desfazer última ação")
 
     opcao = input("Escolha: ")
 
@@ -198,6 +193,10 @@ def prontuario():
         else:
             print("Item não encontrado.")
 
+    elif opcao == "8":
+        print("Ação desfeita!" if p.desfazer_ultima_acao()
+              else "Nada para desfazer ou prontuário fechado.")
+
     elif opcao == "7":
         print(f"\nProntuário: {p.numero}")
         print(f"Animal: {p.nome_animal}")
@@ -210,7 +209,6 @@ def prontuario():
 
         print("\nProcedimentos:")
         listar_itens(p.procedimentos)
-
 
 def estoque():
     print("\n1 - Cadastrar produto")
@@ -300,7 +298,6 @@ def estoque():
         print("Verificação concluída!" if clinica.estoque.descartar_vencidos(
             codigo, date.today()) else "Produto não encontrado.")
 
-
 def pagamento():
     numero = int(input("Número do atendimento: "))
     atendimento = buscar_atendimento(numero)
@@ -321,7 +318,6 @@ def pagamento():
         else:
             print("Não foi possível finalizar. Verifique os itens e o estoque.")
 
-
 def relatorio():
     print("\n========== PAGAMENTOS ==========")
     atual = clinica.pagamentos.inicio
@@ -335,7 +331,6 @@ def relatorio():
         atual = atual.proximo
 
     print(f"\nTotal recebido: R$ {total:.2f}")
-
 
 def main():
     while True:

@@ -11,7 +11,8 @@ class Produto:
         self.perdas = ListaEncadeada()
 
     def adicionar_lote(self, lote):
-        return self.lotes.adicionar(lote)
+        self.lotes.adicionar(lote)
+        return True
 
     def quantidade_em_estoque(self):
         total = 0

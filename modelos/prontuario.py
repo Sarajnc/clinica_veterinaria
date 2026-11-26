@@ -1,5 +1,6 @@
 from datetime import datetime
 from estruturas.lista import ListaEncadeada
+from estruturas.pilha import Pilha
 
 class Prontuario:
     def __init__(self, numero, nome_animal, nome_tutor, veterinario):
@@ -15,29 +16,58 @@ class Prontuario:
         self.medicamentos = ListaEncadeada()
         self.procedimentos = ListaEncadeada()
 
+        self.historico_acoes = Pilha()
+
     def adicionar_item(self, item, tipo):
         if self.status != "Aberto":
             return False
 
         if tipo == "medicamento":
-            return self.medicamentos.adicionar(item)
+            self.medicamentos.adicionar(item)
 
         elif tipo == "procedimento":
-            return self.procedimentos.adicionar(item)
+            self.procedimentos.adicionar(item)
 
-        return False
+        else:
+            return False
+
+        self.historico_acoes.empilhar(("adicionou", item, tipo))
+        return True
 
     def remover_item(self, item, tipo):
         if self.status != "Aberto":
             return False
-        
+
         if tipo == "medicamento":
-            return self.medicamentos.remover(item)
+            removido = self.medicamentos.remover(item)
 
         elif tipo == "procedimento":
-            return self.procedimentos.remover(item)
+            removido = self.procedimentos.remover(item)
 
-        return False
+        else:
+            return False
+
+        if removido:
+            self.historico_acoes.empilhar(("removeu", item, tipo))
+
+        return removido
+
+    def desfazer_ultima_acao(self):
+        if self.status != "Aberto" or self.historico_acoes.esta_vazia():
+            return False
+
+        acao, item, tipo = self.historico_acoes.desempilhar()
+
+        if tipo == "medicamento":
+            lista = self.medicamentos
+        else:
+            lista = self.procedimentos
+
+        if acao == "adicionou":
+            return lista.remover(item)
+
+        lista.adicionar(item)
+        return True
 
     def registrar_alta(self):
         if self.status == "Aberto":
