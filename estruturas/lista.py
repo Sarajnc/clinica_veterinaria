@@ -20,6 +20,7 @@ class ListaEncadeada:
             self.fim = novo_no
 
         self._tamanho += 1
+        return True
 
     def buscar_por(self, criterio):
         atual = self.inicio

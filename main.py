@@ -1,3 +1,4 @@
+
 from datetime import date
 
 from estruturas.lista import ListaEncadeada
@@ -8,270 +9,572 @@ from modelos.produto import Produto
 from modelos.lote import Lote
 from servicos.clinica import Clinica
 
+
+# ============================================================
+# CONFIGURAÇÕES
+# ============================================================
+
 clinica = Clinica(2)
 historico = ListaEncadeada()
 proximo_id = 1
 
+
+# ============================================================
+# FUNÇÕES VISUAIS
+# ============================================================
+
+def linha():
+    print("=" * 58)
+
+
+def titulo(nome):
+    print("\n")
+    linha()
+    print(f"{nome.center(58)}")
+    linha()
+
+
+def secao(nome):
+    print(f"\n--- {nome} ---")
+
+
+def sucesso(mensagem):
+    print(f"\n[OK] {mensagem}")
+
+
+def erro(mensagem):
+    print(f"\n[ERRO] {mensagem}")
+
+
+def alerta(mensagem):
+    print(f"\n[ATENÇÃO] {mensagem}")
+
+
+def menu(titulo_menu, opcoes):
+    titulo(titulo_menu)
+
+    for numero, descricao in opcoes:
+        print(f"  {numero} - {descricao}")
+
+    linha()
+    return input("Escolha uma opção: ").strip()
+
+
+def confirmar(mensagem):
+    return input(f"{mensagem} (s/n): ").strip().lower() == "s"
+
+
+def ler_inteiro(mensagem):
+    while True:
+        try:
+            return int(input(mensagem))
+        except ValueError:
+            erro("Digite um número inteiro válido.")
+
+
+def ler_float(mensagem):
+    while True:
+        try:
+            valor = float(input(mensagem).replace(",", "."))
+            if valor < 0:
+                erro("O valor não pode ser negativo.")
+                continue
+            return valor
+        except ValueError:
+            erro("Digite um valor numérico válido.")
+
+
+def pausa():
+    input("\nPressione ENTER para continuar...")
+
+
+def mostrar_vazio(mensagem):
+    print(f"\n{mensagem}")
+
+
+# ============================================================
+# BUSCAS E SELEÇÃO
+# ============================================================
+
 def buscar_atendimento(numero):
     atual = historico.inicio
+
     while atual:
         if atual.dado.id_atendimento == numero:
             return atual.dado
+
         atual = atual.proximo
+
     return None
+
 
 def listar_itens(lista):
     atual = lista.inicio
     numero = 1
 
+    if not atual:
+        mostrar_vazio("Nenhum item cadastrado.")
+        return
+
     while atual:
         item = atual.dado
-        print(f"{numero}. {item.nome} | Quantidade: {item.quantidade} | R$ {item.calcular_valor():.2f}")
+
+        print(
+            f"{numero}. {item.nome} | "
+            f"Quantidade: {item.quantidade} | "
+            f"R$ {item.calcular_valor():.2f}"
+        )
+
         atual = atual.proximo
         numero += 1
 
+
 def selecionar_item(lista):
-    numero = int(input("Número do item: "))
+    numero = ler_inteiro("Número do item: ")
+
     atual = lista.inicio
     posicao = 1
 
     while atual:
         if posicao == numero:
             return atual.dado
+
         atual = atual.proximo
         posicao += 1
 
     return None
 
-def cadastro():
-    print("\n1 - Cadastrar tutor")
-    print("2 - Cadastrar animal")
-    print("3 - Buscar tutor ou animal")
-    print("4 - Remover tutor ou animal")
 
-    opcao = input("Escolha: ")
+# ============================================================
+# APRESENTAÇÃO DE CADASTROS
+# ============================================================
+
+def exibir_tutor(tutor):
+    titulo("DADOS DO TUTOR")
+
+    print(f"Nome:     {tutor.nome}")
+    print(f"CPF:      {tutor.cpf}")
+    print(f"Telefone: {tutor.telefone}")
+
+    linha()
+
+
+def exibir_animal(animal):
+    titulo("ANIMAL ENCONTRADO")
+
+    print(f"Nome:     {animal.nome}")
+    print(f"Espécie:  {animal.especie}")
+    print(f"Raça:     {animal.raca}")
+    print(f"Idade:    {animal.idade} anos")
+    print(f"Tutor:    {animal.tutor.nome}")
+    print(f"CPF:      {animal.tutor.cpf}")
+
+    linha()
+
+
+# ============================================================
+# CADASTRO DE TUTORES E ANIMAIS
+# ============================================================
+
+def cadastro():
+    opcao = menu("TUTORES E ANIMAIS", [
+        ("1", "Cadastrar tutor"),
+        ("2", "Cadastrar animal"),
+        ("3", "Buscar tutor ou animal"),
+        ("4", "Remover tutor ou animal"),
+        ("0", "Voltar")
+    ])
 
     if opcao == "1":
+        titulo("CADASTRO DE TUTOR")
+
         tutor = Tutor(
-            input("Nome: "),
+            input("Nome completo: "),
             input("CPF: "),
             input("Telefone: ")
         )
-        print("Cadastro realizado!" if clinica.cadastro.cadastrar(tutor)
-              else "CPF já cadastrado.")
+
+        if clinica.cadastro.cadastrar(tutor):
+            sucesso("Tutor cadastrado com sucesso!")
+        else:
+            erro("CPF já cadastrado.")
 
     elif opcao == "2":
+        titulo("CADASTRO DE ANIMAL")
+
         cpf = input("CPF do tutor: ")
         tutor = clinica.cadastro.buscar(cpf)
 
         if tutor:
             animal = Animal(
-                input("Nome: "),
+                input("Nome do animal: "),
                 input("Espécie: "),
                 input("Raça: "),
-                int(input("Idade: ")),
+                ler_inteiro("Idade: "),
                 tutor
             )
-            print("Animal cadastrado!" if clinica.cadastro.cadastrar(animal)
-                  else "Não foi possível cadastrar.")
+
+            if clinica.cadastro.cadastrar(animal):
+                sucesso("Animal cadastrado com sucesso!")
+            else:
+                erro("Não foi possível cadastrar o animal.")
         else:
-            print("Tutor não encontrado.")
+            erro("Tutor não encontrado.")
 
     elif opcao == "3":
-        cpf = input("CPF: ")
-        nome = input("Nome do animal (ENTER para buscar tutor): ")
-        resultado = clinica.cadastro.buscar(cpf, nome) if nome else clinica.cadastro.buscar(cpf)
+        titulo("CONSULTA DE CADASTRO")
+
+        cpf = input("CPF: ").strip()
+        nome = input("Nome do animal (ENTER para buscar tutor): ").strip()
+
+        resultado = (
+            clinica.cadastro.buscar(cpf, nome)
+            if nome
+            else clinica.cadastro.buscar(cpf)
+        )
 
         if resultado:
-            print(vars(resultado))
+            if isinstance(resultado, Animal):
+                exibir_animal(resultado)
+            else:
+                exibir_tutor(resultado)
         else:
-            print("Cadastro não encontrado.")
+            erro("Cadastro não encontrado.")
 
     elif opcao == "4":
-        cpf = input("CPF do tutor: ")
-        nome = input("Nome do animal (ENTER para remover tutor): ")
+        titulo("REMOÇÃO DE CADASTRO")
 
-        removido = clinica.cadastro.remover(cpf, nome) if nome else clinica.cadastro.remover(cpf)
-        print("Cadastro removido!" if removido else "Cadastro não encontrado.")
+        cpf = input("CPF do tutor: ").strip()
+        nome = input("Nome do animal (ENTER para remover tutor): ").strip()
+
+        if confirmar("Deseja realmente remover?"):
+            removido = (
+                clinica.cadastro.remover(cpf, nome)
+                if nome
+                else clinica.cadastro.remover(cpf)
+            )
+
+            if removido:
+                sucesso("Cadastro removido!")
+            else:
+                erro("Cadastro não encontrado.")
+
+    elif opcao != "0":
+        erro("Opção inválida.")
+
+
+# ============================================================
+# ATENDIMENTOS E FILA
+# ============================================================
 
 def atendimento():
     global proximo_id
 
-    print("\n1 - Registrar chegada")
-    print("2 - Chamar próximo animal")
-    print("3 - Listar atendimentos")
-
-    opcao = input("Escolha: ")
+    opcao = menu("ATENDIMENTO E FILA", [
+        ("1", "Registrar chegada"),
+        ("2", "Chamar próximo animal"),
+        ("3", "Listar atendimentos"),
+        ("0", "Voltar")
+    ])
 
     if opcao == "1":
+        titulo("REGISTRO DE ATENDIMENTO")
+
         cpf = input("CPF do tutor: ")
         nome = input("Nome do animal: ")
+
         animal = clinica.cadastro.buscar(cpf, nome)
 
         if animal:
-            queixa = input("Queixa: ")
-            emergencia = input("É emergência? (s/n): ").lower() == "s"
+            queixa = input("Queixa principal: ")
+            emergencia = confirmar("É uma emergência?")
 
-            novo = Atendimento(animal, queixa, proximo_id, emergencia)
+            novo = Atendimento(
+                animal,
+                queixa,
+                proximo_id,
+                emergencia
+            )
+
             clinica.receber_atendimento(novo)
             historico.adicionar(novo)
+
             proximo_id += 1
-            print("Animal entrou na fila!")
+
+            sucesso(f"Atendimento #{novo.id_atendimento} registrado!")
+
+            print(f"Animal: {animal.nome}")
+            print(f"Tutor: {animal.tutor.nome}")
+            print(f"Prioridade: {'EMERGÊNCIA' if emergencia else 'Normal'}")
+
         else:
-            print("Animal não encontrado.")
+            erro("Animal não encontrado.")
 
     elif opcao == "2":
+        titulo("CHAMADA DE PACIENTE")
+
         veterinario = input("Veterinário responsável: ")
+
         chamado = clinica.chamar_proximo_animal(veterinario)
 
         if chamado:
-            print(f"Atendendo: {chamado.animal.nome}")
+            sucesso("Paciente encaminhado para atendimento!")
+
+            print(f"Animal: {chamado.animal.nome}")
+            print(f"Tutor: {chamado.animal.tutor.nome}")
+            print(f"Veterinário: {veterinario}")
             print(f"Prontuário: {chamado.prontuario.numero}")
+
         else:
-            print("Nenhum paciente disponível ou consultórios ocupados.")
+            alerta("Nenhum paciente disponível ou consultórios ocupados.")
 
     elif opcao == "3":
+        titulo("HISTÓRICO DE ATENDIMENTOS")
+
         atual = historico.inicio
+
+        if not atual:
+            mostrar_vazio("Nenhum atendimento registrado.")
+            return
+
         while atual:
             a = atual.dado
             status = a.prontuario.status if a.prontuario else "Aguardando"
-            print(f"#{a.id_atendimento} - {a.animal.nome} | {status}")
+
+            print(f"\nAtendimento #{a.id_atendimento}")
+            print(f"Animal: {a.animal.nome}")
+            print(f"Tutor: {a.animal.tutor.nome}")
+            print(f"Queixa: {a.queixa}")
+            print(f"Prioridade: {'Emergência' if a.emergencia else 'Normal'}")
+            print(f"Status: {status}")
+
             atual = atual.proximo
 
-def prontuario():
-    numero = int(input("Número do atendimento: "))
-    atendimento = buscar_atendimento(numero)
+    elif opcao != "0":
+        erro("Opção inválida.")
 
-    if not atendimento or not atendimento.prontuario:
-        print("Atendimento ou prontuário não encontrado.")
+
+# ============================================================
+# PRONTUÁRIO E DIAGNÓSTICO
+# ============================================================
+
+def prontuario():
+    titulo("PRONTUÁRIO E DIAGNÓSTICO")
+
+    numero = ler_inteiro("Número do atendimento: ")
+    atendimento_atual = buscar_atendimento(numero)
+
+    if not atendimento_atual or not atendimento_atual.prontuario:
+        erro("Atendimento ou prontuário não encontrado.")
         return
 
-    p = atendimento.prontuario
+    p = atendimento_atual.prontuario
 
-    print("\n1 - Exibir diagnóstico")
-    print("2 - Marcar alteração")
-    print("3 - Adicionar medicamento")
-    print("4 - Adicionar procedimento")
-    print("5 - Remover medicamento")
-    print("6 - Remover procedimento")
-    print("7 - Consultar prontuário")
-    print("8 - Desfazer última ação")
-
-    opcao = input("Escolha: ")
+    opcao = menu("GERENCIAR PRONTUÁRIO", [
+        ("1", "Exibir diagnóstico"),
+        ("2", "Marcar alteração"),
+        ("3", "Adicionar medicamento"),
+        ("4", "Adicionar procedimento"),
+        ("5", "Remover medicamento"),
+        ("6", "Remover procedimento"),
+        ("7", "Consultar prontuário"),
+        ("8", "Desfazer última ação"),
+        ("0", "Voltar")
+    ])
 
     if opcao == "1":
         p.exibir_diagnostico()
 
     elif opcao == "2":
         p.exibir_diagnostico()
+
         codigo = input("Código da estrutura: ")
-        print("Alteração registrada!" if p.marcar_alteracao(codigo)
-              else "Código inválido ou prontuário fechado.")
+
+        if p.marcar_alteracao(codigo):
+            sucesso("Alteração registrada!")
+        else:
+            erro("Código inválido ou prontuário fechado.")
 
     elif opcao == "3":
         codigo = input("Código do produto: ")
-        quantidade = int(input("Quantidade: "))
-        print("Medicamento adicionado!" if clinica.adicionar_medicamento(
-            atendimento, codigo, quantidade) else "Não foi possível adicionar.")
+        quantidade = ler_inteiro("Quantidade: ")
+
+        if clinica.adicionar_medicamento(
+            atendimento_atual, codigo, quantidade
+        ):
+            sucesso("Medicamento adicionado!")
+        else:
+            erro("Não foi possível adicionar o medicamento.")
 
     elif opcao == "4":
-        nome = input("Procedimento: ")
-        valor = float(input("Valor: "))
-        print("Procedimento adicionado!" if clinica.adicionar_procedimento(
-            atendimento, nome, valor) else "Não foi possível adicionar.")
+        nome = input("Nome do procedimento: ")
+        valor = ler_float("Valor: ")
+
+        if clinica.adicionar_procedimento(
+            atendimento_atual, nome, valor
+        ):
+            sucesso("Procedimento adicionado!")
+        else:
+            erro("Não foi possível adicionar o procedimento.")
 
     elif opcao in ("5", "6"):
         lista = p.medicamentos if opcao == "5" else p.procedimentos
         tipo = "medicamento" if opcao == "5" else "procedimento"
 
+        secao("ITENS CADASTRADOS")
         listar_itens(lista)
+
         item = selecionar_item(lista)
 
         if item:
-            print("Item removido!" if p.remover_item(item, tipo)
-                  else "Não foi possível remover.")
+            if p.remover_item(item, tipo):
+                sucesso("Item removido!")
+            else:
+                erro("Não foi possível remover.")
         else:
-            print("Item não encontrado.")
-
-    elif opcao == "8":
-        print("Ação desfeita!" if p.desfazer_ultima_acao()
-              else "Nada para desfazer ou prontuário fechado.")
+            erro("Item não encontrado.")
 
     elif opcao == "7":
-        print(f"\nProntuário: {p.numero}")
-        print(f"Animal: {p.nome_animal}")
-        print(f"Tutor: {p.nome_tutor}")
-        print(f"Veterinário: {p.veterinario}")
-        print(f"Status: {p.status}")
+        titulo("DADOS DO PRONTUÁRIO")
 
-        print("\nMedicamentos:")
+        print(f"Número:       {p.numero}")
+        print(f"Animal:       {p.nome_animal}")
+        print(f"Tutor:        {p.nome_tutor}")
+        print(f"Veterinário:  {p.veterinario}")
+        print(f"Status:       {p.status}")
+
+        secao("MEDICAMENTOS")
         listar_itens(p.medicamentos)
 
-        print("\nProcedimentos:")
+        secao("PROCEDIMENTOS")
         listar_itens(p.procedimentos)
 
-def estoque():
-    print("\n1 - Cadastrar produto")
-    print("2 - Adicionar lote")
-    print("3 - Consultar estoque")
-    print("4 - Ajustar quantidade de lote")
-    print("5 - Descartar vencidos")
+    elif opcao == "8":
+        if p.desfazer_ultima_acao():
+            sucesso("Última ação desfeita!")
+        else:
+            alerta("Nada para desfazer ou prontuário fechado.")
 
-    opcao = input("Escolha: ")
+    elif opcao != "0":
+        erro("Opção inválida.")
+
+
+# ============================================================
+# ESTOQUE
+# ============================================================
+
+def estoque():
+    opcao = menu("CONTROLE DE ESTOQUE", [
+        ("1", "Cadastrar produto"),
+        ("2", "Adicionar lote"),
+        ("3", "Consultar estoque"),
+        ("4", "Ajustar quantidade de lote"),
+        ("5", "Descartar vencidos"),
+        ("0", "Voltar")
+    ])
 
     if opcao == "1":
+        titulo("CADASTRO DE PRODUTO")
+
         produto = Produto(
             input("Nome: "),
             input("Código: "),
-            float(input("Preço de venda: ")),
-            int(input("Estoque mínimo: "))
+            ler_float("Preço de venda: "),
+            ler_inteiro("Estoque mínimo: ")
         )
-        print("Produto cadastrado!" if clinica.estoque.cadastrar_produto(produto)
-              else "Código já existente.")
+
+        if clinica.estoque.cadastrar_produto(produto):
+            sucesso("Produto cadastrado!")
+        else:
+            erro("Código já existente.")
 
     elif opcao == "2":
+        titulo("ENTRADA DE LOTE")
+
         codigo = input("Código do produto: ")
         produto = clinica.estoque.buscar_produto(codigo)
 
         if produto:
-            lote = Lote(
-                produto,
-                input("Fornecedor: "),
-                float(input("Preço de compra: ")),
-                date.today(),
-                date.fromisoformat(input("Validade (AAAA-MM-DD): ")),
-                int(input("Quantidade: "))
-            )
-            clinica.estoque.adicionar_lote(codigo, lote)
-            print("Lote cadastrado!")
+            try:
+                validade = date.fromisoformat(
+                    input("Validade (AAAA-MM-DD): ")
+                )
+
+                lote = Lote(
+                    produto,
+                    input("Fornecedor: "),
+                    ler_float("Preço de compra: "),
+                    date.today(),
+                    validade,
+                    ler_inteiro("Quantidade: ")
+                )
+
+                clinica.estoque.adicionar_lote(codigo, lote)
+                sucesso("Lote cadastrado!")
+
+            except ValueError:
+                erro("Data inválida. Utilize AAAA-MM-DD.")
+
         else:
-            print("Produto não encontrado.")
+            erro("Produto não encontrado.")
 
     elif opcao == "3":
+        titulo("CONSULTA DE ESTOQUE")
+
         atual = clinica.estoque.produtos.inicio
+
+        if not atual:
+            mostrar_vazio("Nenhum produto cadastrado.")
+            return
 
         while atual:
             p = atual.dado
             quantidade = p.quantidade_em_estoque()
-            print(f"\n{p.nome} | Código: {p.codigo} | Estoque: {quantidade}")
+
+            secao(p.nome)
+
+            print(f"Código: {p.codigo}")
+            print(f"Quantidade disponível: {quantidade}")
+            print(f"Preço de venda: R$ {p.preco_venda:.2f}")
 
             if clinica.estoque.verificar_estoque_minimo(p.codigo):
-                print("ALERTA: estoque abaixo do mínimo!")
+                alerta("Estoque abaixo do mínimo!")
+
+            print("\nLotes:")
 
             lote_atual = p.lotes.inicio
+
+            if not lote_atual:
+                print("  Nenhum lote disponível.")
+
             while lote_atual:
                 l = lote_atual.dado
-                print(f"  Lote: {l.fornecedor} | Qtd: {l.quantidade} | Validade: {l.data_validade}")
+
+                print(f"  Fornecedor: {l.fornecedor}")
+                print(f"  Quantidade: {l.quantidade}")
+                print(f"  Validade: {l.data_validade}")
+
+                if l.data_validade <= date.today():
+                    alerta("Lote vencido ou com validade para hoje!")
+
                 lote_atual = lote_atual.proximo
 
             perda = p.perdas.inicio
+
+            if perda:
+                print("\nHistórico de perdas:")
+
             while perda:
-                print(f"  PERDA: {perda.dado.quantidade} unidades descartadas")
+                print(
+                    f"  {perda.dado.quantidade} unidades descartadas"
+                )
                 perda = perda.proximo
 
             atual = atual.proximo
 
     elif opcao == "4":
+        titulo("AJUSTE DE LOTE")
+
         codigo = input("Código do produto: ")
         produto = clinica.estoque.buscar_produto(codigo)
 
@@ -281,72 +584,146 @@ def estoque():
 
             while atual:
                 l = atual.dado
-                print(f"{numero} - {l.fornecedor} | Quantidade: {l.quantidade}")
+
+                print(
+                    f"{numero} - {l.fornecedor} | "
+                    f"Quantidade: {l.quantidade} | "
+                    f"Validade: {l.data_validade}"
+                )
+
                 atual = atual.proximo
                 numero += 1
 
-            lote = selecionar_item(produto.lotes)
-            if lote:
-                quantidade = int(input("Nova quantidade: "))
-                print("Estoque ajustado!" if clinica.estoque.ajustar_quantidade(
-                    codigo, lote, quantidade) else "Não foi possível ajustar.")
+            if produto.lotes.inicio:
+                lote = selecionar_item(produto.lotes)
+
+                if lote:
+                    quantidade = ler_inteiro("Nova quantidade: ")
+
+                    if clinica.estoque.ajustar_quantidade(
+                        codigo, lote, quantidade
+                    ):
+                        sucesso("Estoque ajustado!")
+                    else:
+                        erro("Não foi possível ajustar.")
+                else:
+                    erro("Lote não encontrado.")
+            else:
+                alerta("Produto não possui lotes.")
+
         else:
-            print("Produto não encontrado.")
+            erro("Produto não encontrado.")
 
     elif opcao == "5":
+        titulo("DESCARTE DE PRODUTOS VENCIDOS")
+
         codigo = input("Código do produto: ")
-        print("Verificação concluída!" if clinica.estoque.descartar_vencidos(
-            codigo, date.today()) else "Produto não encontrado.")
+
+        if confirmar("Deseja realizar a verificação e o descarte?"):
+            if clinica.estoque.descartar_vencidos(
+                codigo, date.today()
+            ):
+                sucesso("Verificação concluída!")
+            else:
+                erro("Produto não encontrado.")
+
+    elif opcao != "0":
+        erro("Opção inválida.")
+
+
+# ============================================================
+# ALTA E PAGAMENTO
+# ============================================================
 
 def pagamento():
-    numero = int(input("Número do atendimento: "))
-    atendimento = buscar_atendimento(numero)
+    titulo("ALTA E PAGAMENTO")
 
-    if not atendimento:
-        print("Atendimento não encontrado.")
+    numero = ler_inteiro("Número do atendimento: ")
+    atendimento_atual = buscar_atendimento(numero)
+
+    if not atendimento_atual:
+        erro("Atendimento não encontrado.")
         return
 
-    forma = input("Pagamento (PIX, Cartão ou Dinheiro): ")
+    forma = input("Pagamento (PIX, Cartão ou Dinheiro): ").strip()
     parcelas = 1
 
-    if forma == "Cartão":
-        parcelas = int(input("Número de parcelas: "))
+    if forma.lower() == "cartão":
+        parcelas = ler_inteiro("Número de parcelas: ")
 
-    if input("Confirmar alta, fechamento e pagamento? (s/n): ").lower() == "s":
-        if clinica.finalizar_atendimento(atendimento, forma, parcelas):
-            print("Alta registrada, prontuário fechado e pagamento confirmado!")
+        if parcelas < 1:
+            erro("Informe pelo menos uma parcela.")
+            return
+
+    if confirmar("Confirmar alta, fechamento e pagamento?"):
+        if clinica.finalizar_atendimento(
+            atendimento_atual, forma, parcelas
+        ):
+            sucesso("Alta registrada, prontuário fechado e pagamento confirmado!")
         else:
-            print("Não foi possível finalizar. Verifique os itens e o estoque.")
+            erro("Não foi possível finalizar. Verifique os itens e o estoque.")
+
+
+# ============================================================
+# RELATÓRIO FINANCEIRO
+# ============================================================
 
 def relatorio():
-    print("\n========== PAGAMENTOS ==========")
+    titulo("RELATÓRIO DE PAGAMENTOS")
+
     atual = clinica.pagamentos.inicio
     total = 0
+    quantidade = 0
+
+    if not atual:
+        mostrar_vazio("Nenhum pagamento registrado.")
+        return
 
     while atual:
         p = atual.dado
-        print(f"Prontuário {p.numero_prontuario} | {p.nome_pagador}")
-        print(f"{p.forma_pagamento} | Total: R$ {p.valor_total:.2f}")
+
+        print(f"\nProntuário: {p.numero_prontuario}")
+        print(f"Pagador: {p.nome_pagador}")
+        print(f"Forma: {p.forma_pagamento}")
+        print(f"Valor: R$ {p.valor_total:.2f}")
+
         total += p.valor_total
+        quantidade += 1
+
         atual = atual.proximo
 
-    print(f"\nTotal recebido: R$ {total:.2f}")
+    linha()
+
+    print(f"Quantidade de pagamentos: {quantidade}")
+    print(f"TOTAL RECEBIDO: R$ {total:.2f}")
+
+    linha()
+
+
+# ============================================================
+# MENU PRINCIPAL
+# ============================================================
 
 def main():
     while True:
-        print("""
-========== CLÍNICA VETERINÁRIA ==========
+        print("\n")
+        linha()
+        print("CLÍNICA VETERINÁRIA".center(58))
+        print("SISTEMA DE GERENCIAMENTO".center(58))
+        linha()
 
-1 - Tutores e animais
-2 - Atendimento e fila
-3 - Prontuário e diagnóstico
-4 - Estoque
-5 - Alta e pagamento
-6 - Relatório de pagamentos
-0 - Sair
-""")
+        print("\n  1 - Tutores e animais")
+        print("  2 - Atendimento e fila")
+        print("  3 - Prontuário e diagnóstico")
+        print("  4 - Controle de estoque")
+        print("  5 - Alta e pagamento")
+        print("  6 - Relatório financeiro")
 
-        opcao = input("Escolha: ")
+        print("\n  0 - Encerrar sistema")
+
+        linha()
+
+        opcao = input("Selecione uma opção: ").strip()
 
         if opcao == "1":
             cadastro()
@@ -359,12 +736,15 @@ def main():
         elif opcao == "5":
             pagamento()
         elif opcao == "6":
+            print("\nAbrindo relatório financeiro...")
             relatorio()
+            pausa()
         elif opcao == "0":
-            print("Sistema encerrado!")
-            break
+            if confirmar("Deseja realmente encerrar o sistema?"):
+                print("\nSistema encerrado. Obrigada!")
+                break
         else:
-            print("Opção inválida.")
+            erro("Opção inválida. Tente novamente.")
 
 if __name__ == "__main__":
     main()
