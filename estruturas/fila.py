@@ -1,9 +1,12 @@
+
 from estruturas.lista import No
+
 
 class Fila:
     def __init__(self):
         self.inicio = None
         self.fim = None
+        self._tamanho = 0
 
     def enfileirar(self, dado):
         novo_no = No(dado)
@@ -15,6 +18,8 @@ class Fila:
             self.fim.proximo = novo_no
             self.fim = novo_no
 
+        self._tamanho += 1
+
     def desenfileirar(self):
         if self.esta_vazia():
             return None
@@ -25,8 +30,10 @@ class Fila:
         if self.inicio is None:
             self.fim = None
 
+        self._tamanho -= 1
+
         return dado
-   
+
     def esta_vazia(self):
         return self.inicio is None
 
@@ -37,11 +44,4 @@ class Fila:
         return self.inicio.dado
 
     def tamanho(self):
-        contador = 0
-        atual = self.inicio
-
-        while atual is not None:
-            contador += 1
-            atual = atual.proximo
-
-        return contador
+        return self._tamanho

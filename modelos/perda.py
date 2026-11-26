@@ -7,10 +7,11 @@ class Perda:
 
     @staticmethod
     def descartar_lotes_vencidos(produto, data_atual):
-        quantidade_lotes = produto.lotes.tamanho()
+        atual = produto.lotes.inicio
 
-        for i in range(quantidade_lotes):
-            lote = produto.lotes.desenfileirar()
+        while atual is not None:
+            lote = atual.dado
+            proximo = atual.proximo
 
             if lote.data_validade < data_atual:
                 perda = Perda(
@@ -21,6 +22,6 @@ class Perda:
                 )
 
                 produto.perdas.adicionar(perda)
+                produto.lotes.remover(lote)
 
-            else:
-                produto.lotes.enfileirar(lote)
+            atual = proximo

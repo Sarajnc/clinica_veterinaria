@@ -54,8 +54,9 @@ class Cadastro:
             atual = tutor.animais.inicio
 
             while atual is not None:
+                proximo = atual.proximo
                 self.animais.remover(atual.dado)
-                atual = atual.proximo
+                atual = proximo
 
             return self.tutores.remover(tutor)
 
@@ -66,4 +67,5 @@ class Cadastro:
 
         tutor.remover_animal(nome_animal)
         self.animais.remover(animal)
+
         return True
