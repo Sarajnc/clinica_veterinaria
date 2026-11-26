@@ -4,7 +4,7 @@ Sistema em Python que simula o ciclo completo de um atendimento veterinário: ca
 
 Todas as estruturas de dados (lista encadeada, fila, pilha e árvore) foram implementadas do zero, sem usar estruturas prontas do Python para resolver o problema. Apenas a biblioteca padrão é utilizada (`datetime`).
 
-## 🚀 Como executar
+## Como executar
 
 Requisito: Python 3, sem dependências externas.
 
@@ -18,7 +18,7 @@ Menu principal: **1** Tutores e animais · **2** Atendimento e fila · **3** Pro
 
 Os dados ficam apenas em memória e são perdidos ao encerrar o programa.
 
-## 🗂️ Organização do código
+## Organização do código
 
 ```text
 estruturas/   Estruturas genéricas, sem regras da clínica
@@ -37,7 +37,7 @@ servicos/     Regras da clínica
 main.py       Menu interativo
 ```
 
-## 🧠 Combinações de estruturas
+## Combinações de estruturas
 
 ### 1. Atendimento com prioridade: Fila + Fila
 
@@ -79,7 +79,7 @@ main.py       Menu interativo
 
 `Clinica.finalizar_atendimento()` usa várias estruturas na mesma operação: percorre os medicamentos do prontuário, confere o estoque de cada produto (combinação 3), baixa os medicamentos pelo lote mais antigo, registra o `Pagamento`, dá a alta e fecha o prontuário. Se o estoque for insuficiente, nada é baixado e o atendimento não é finalizado.
 
-## ⏱️ Complexidade
+## Complexidade
 
 | Operação | Custo |
 |---|---|
@@ -94,7 +94,7 @@ main.py       Menu interativo
 
 T = tutores · a = animais do tutor · P = produtos · L = lotes do produto · n = itens da lista · N = nós da árvore
 
-## 📜 Histórico de desenvolvimento
+## Histórico de desenvolvimento
 
 [Consultar histórico de commits](https://github.com/Sarajnc/clinica_veterinaria/commits/main)
 
